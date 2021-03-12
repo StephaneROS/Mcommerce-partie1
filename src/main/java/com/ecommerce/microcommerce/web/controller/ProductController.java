@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -61,13 +64,44 @@ public class ProductController {
         return produit;
     }
 
+    //Calcul la marge d'un produit par son Id
+    @ApiOperation(value = "Calcule la marge de chaque produit (différence entre prix d‘achat et prix de vente")
+    @RequestMapping(value = "/AdminProduits", method = RequestMethod.GET)
 
+    public ResponseEntity calculerMargeProduit() {
+
+        Iterable<Product> produits = productDao.findAll();
+
+        HashMap<Product, Integer> returnedMap = new HashMap<>();
+        for(Product product : produits) {
+            returnedMap.put(product, product.calculerMarge());
+        }
+        return new ResponseEntity(returnedMap , HttpStatus.OK);
+
+    }
+
+
+
+    //Récupérer la liste des produits triés par nom croissant
+
+    @RequestMapping(value = "/OrderedProduits", method = RequestMethod.GET)
+
+    public MappingJacksonValue trierProduitsParOrdreAlphabetique() {
+        Iterable<Product> produits = productDao.findAll(Sort.by(Sort.Direction.ASC, "nom"));
+
+        return new MappingJacksonValue(produits);
+
+    }
 
 
     //ajouter un produit
     @PostMapping(value = "/Produits")
 
     public ResponseEntity<Void> ajouterProduit(@Valid @RequestBody Product product) {
+
+        if (product.getPrix() == 0){
+            return ResponseEntity.noContent().build();
+        }
 
         Product productAdded =  productDao.save(product);
 
@@ -83,11 +117,11 @@ public class ProductController {
         return ResponseEntity.created(location).build();
     }
 
-    @DeleteMapping (value = "/Produits/{id}")
-    public void supprimerProduit(@PathVariable int id) {
+    //@DeleteMapping (value = "/Produits/{id}")
+    //public void supprimerProduit(@PathVariable int id) {
 
-        productDao.delete(id);
-    }
+      //  productDao.delete(id);
+    //}
 
     @PutMapping (value = "/Produits")
     public void updateProduit(@RequestBody Product product) {
