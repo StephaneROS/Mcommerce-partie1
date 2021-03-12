@@ -2,6 +2,7 @@ package com.ecommerce.microcommerce.web.controller;
 
 import com.ecommerce.microcommerce.dao.ProductDao;
 import com.ecommerce.microcommerce.model.Product;
+import com.ecommerce.microcommerce.web.exceptions.ProduitGratuitException;
 import com.ecommerce.microcommerce.web.exceptions.ProduitIntrouvableException;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
@@ -59,7 +60,8 @@ public class ProductController {
 
         Product produit = productDao.findById(id);
 
-        if(produit==null) throw new ProduitIntrouvableException("Le produit avec l'id " + id + " est INTROUVABLE. Écran Bleu si je pouvais.");
+        if(produit==null)
+            throw new ProduitIntrouvableException("Le produit avec l'id " + id + " est INTROUVABLE. Écran Bleu si je pouvais.");
 
         return produit;
     }
@@ -100,7 +102,7 @@ public class ProductController {
     public ResponseEntity<Void> ajouterProduit(@Valid @RequestBody Product product) {
 
         if (product.getPrix() == 0){
-            return ResponseEntity.noContent().build();
+            throw new ProduitGratuitException("Le produit que vous voulez saisir est gratuit! prix de vente 0.");
         }
 
         Product productAdded =  productDao.save(product);
